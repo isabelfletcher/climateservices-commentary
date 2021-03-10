@@ -1,0 +1,340 @@
+## Load libraries
+pacman::p_load("ggplot2", "dplyr", "lubridate",
+               "scales", "zoo", "ggpubr", "raster",
+               "sf", "tidyr")
+
+############################################################
+
+# Fig. S1
+
+# Malaria plots
+data <- read.csv("data/inla_input/data_malaria.csv")
+
+station <- data %>% subset(source == "station" & Year > 1989 & Year < 2016) %>% 
+  dplyr::group_by(Month) %>%
+  dplyr::summarise(station = mean(tmean, na.rm = TRUE)) 
+
+# Temperature
+gp1 <-
+  data %>% subset(Year > 1989 & Year < 2016) %>%
+  dplyr::group_by(Month, source) %>%
+  dplyr::summarise(tmean = mean(tmean, na.rm = TRUE),
+                   cases = mean(PV, na.rm = TRUE)) %>% 
+  subset(source != "station") %>%
+  mutate(source = recode(source, 
+                         "chelsa" = "CHELSA",
+                         "cru"   = "CRU",
+                         "era5" = "ERA5",
+                         "terraclimate" = "TerraClimate",
+                         "worldclim" = "WorldClim")) %>%
+  mutate(source = factor(source, levels = c("CHELSA",
+                                            "CRU",
+                                            "ERA5",
+                                            "TerraClimate",
+                                            "WorldClim"))) %>% 
+  ggplot() +
+  geom_bar(aes(x = as.factor(Month), y = cases), stat = "identity", colour = 'transparent', fill = 'slateblue', alpha = 0.3) + 
+  geom_line(data = station, mapping = aes(x = Month, y = station * 1.2, colour = 'station'), stat = "identity", alpha = 0.7) + 
+  geom_line(mapping = aes(Month, tmean *1.2, group = source, colour = "source"), stat = "identity", alpha = 0.7) +
+  theme_light() +
+  theme(legend.position = "top",
+        axis.text = element_text(size = 8),
+        axis.text.x = element_text(angle = 90),
+        panel.grid = element_blank(),
+        legend.title = element_blank(),
+        strip.background = element_blank(),
+        strip.text = element_text(colour = "black")) +
+  ylab("Malaria cases") + xlab("Month") +
+  scale_x_discrete(labels = month.abb) +
+  facet_wrap(~source, scales = "fixed") +
+  scale_colour_manual(values = c("grey50", "red")) +
+  guides(colour = guide_legend(override.aes = list(alpha = 0.7))) 
+
+temp_malaria <- 
+  gp1 %+% scale_y_continuous(name = expression("Malaria cases"), 
+                             sec.axis = sec_axis(~ . / 1.2 , 
+                                                 breaks = seq(0,30, 5),
+                                                 name = "Temperature (°C)"), 
+                             limits = c(0, 40), 
+                             expand = c(0,0)) +
+  theme(axis.title.y.right = element_text(hjust = 0.2,
+                                          vjust = 1))
+
+
+# Precipitation
+data <- read.csv("data/inla_input/data_malaria.csv")
+
+station <- data %>% subset(source == "station" & Year > 1989 & Year < 2016) %>% 
+  dplyr::group_by(Month) %>%
+  dplyr::summarise(station = mean(prcp, na.rm = TRUE)) 
+
+gp1 <-
+data %>% subset(Year > 1989 & Year < 2016) %>%
+  dplyr::group_by(Month, source) %>%
+  dplyr::summarise(prcp = mean(prcp, na.rm = TRUE),
+                   cases = mean(PV, na.rm = TRUE)) %>% 
+  subset(source != "station") %>%
+  mutate(source = recode(source, 
+                         "chelsa" = "CHELSA",
+                         "cru"   = "CRU",
+                         "era5" = "ERA5",
+                         "terraclimate" = "TerraClimate",
+                         "worldclim" = "WorldClim")) %>%
+  mutate(source = factor(source, levels = c("CHELSA",
+                                            "CRU",
+                                            "ERA5",
+                                            "TerraClimate",
+                                            "WorldClim"))) %>% 
+  ggplot() +
+  geom_bar(aes(x = as.factor(Month), y = cases), stat = "identity", colour = 'transparent', fill = 'slateblue', alpha = 0.3) + 
+  geom_line(data = station, mapping = aes(x = Month, y = station * 2.6, colour = 'station'), stat = "identity", alpha = 0.7) + 
+  geom_line(mapping = aes(Month, prcp *2.6, group = source, colour = "source"), stat = "identity", alpha = 0.7) +
+  theme_light() +
+  theme(legend.position = "top",
+        axis.text = element_text(size = 8),
+        axis.text.x = element_text(angle = 90),
+        panel.grid = element_blank(),
+        legend.title = element_blank(),
+        strip.background = element_blank(),
+        strip.text = element_text(colour = "black")) +
+  ylab("Malaria cases") + xlab("Month") +
+  scale_x_discrete(labels = month.abb) +
+  facet_wrap(~source, scales = "fixed") +
+  scale_colour_manual(values = c("grey50", "red")) +
+  guides(colour = guide_legend(override.aes = list(alpha = 0.7))) 
+
+prcp_malaria <- 
+  gp1 %+% scale_y_continuous(name = expression("Malaria cases"), 
+                             sec.axis = sec_axis(~ . / 2.6, 
+                                                 breaks = seq(0,15, 5),
+                                                 name = "Precipitation (mm/day)"), 
+                             limits = c(0, 40), 
+                             expand = c(0,0)) +
+  theme(axis.title.y.right = element_text(hjust = 0.2,
+                                          vjust = 1))
+
+
+
+# Dengue plots
+data <- read.csv("data/inla_input/data_dengue.csv")
+
+station <- data %>% subset(source == "station" & Year > 2001 & Year < 2015) %>% 
+  dplyr::group_by(Month) %>%
+  dplyr::summarise(station = mean(tmean, na.rm = TRUE)) 
+
+# Temperature
+gp1 <-
+  data %>% subset(Year > 2001 & Year < 2015) %>%
+  dplyr::group_by(Month, source) %>%
+  dplyr::summarise(tmean = mean(tmean, na.rm = TRUE),
+                   cases = mean(cases, na.rm = TRUE)) %>% 
+  subset(source != "station") %>%
+  mutate(source = recode(source, 
+                         "chelsa" = "CHELSA",
+                         "cru"   = "CRU",
+                         "era5" = "ERA5",
+                         "terraclimate" = "TerraClimate",
+                         "worldclim" = "WorldClim")) %>%
+  mutate(source = factor(source, levels = c("CHELSA",
+                                            "CRU",
+                                            "ERA5",
+                                            "TerraClimate",
+                                            "WorldClim"))) %>% 
+  ggplot() +
+  geom_bar(aes(x = as.factor(Month), y = cases), stat = "identity", colour = 'transparent', fill = 'slateblue', alpha = 0.3) + 
+  geom_line(data = station, mapping = aes(x = Month, y = station *2.5, colour = 'station'), stat = "identity", alpha = 0.7) + 
+  geom_line(mapping = aes(Month, tmean *2.5, group = source, colour = "source"), stat = "identity", alpha = 0.7) +
+  theme_light() +
+  theme(legend.position = "top",
+        axis.text = element_text(size = 8),
+        axis.text.x = element_text(angle = 90),
+        panel.grid = element_blank(),
+        legend.title = element_blank(),
+        strip.background = element_blank(),
+        strip.text = element_text(colour = "black")) +
+  ylab("Dengue cases") + xlab("Month") +
+  scale_x_discrete(labels = month.abb) +
+  facet_wrap(~source, scales = "fixed") +
+  scale_colour_manual(values = c("grey50", "red")) +
+  guides(colour = guide_legend(override.aes = list(alpha = 0.7))) 
+  
+temp_dengue <- 
+  gp1 %+% scale_y_continuous(name = expression("Dengue cases"), 
+                             sec.axis = sec_axis(~ . / 2.5 , 
+                                                 breaks = seq(0,30, 5),
+                                                 name = "Temperature (°C)"), 
+                             limits = c(0, 105), 
+                             expand = c(0,0)) +
+  theme(axis.title.y.right = element_text(hjust = 0.2,
+                                          vjust = 1))
+
+
+# Precipitation
+data <- read.csv("data/inla_input/data_dengue.csv")
+
+station <- data %>% subset(source == "station" & Year > 2001 & Year < 2015) %>% 
+  dplyr::group_by(Month) %>%
+  dplyr::summarise(station = mean(prcp, na.rm = TRUE)) 
+
+gp1 <-
+  data %>% subset(Year > 2001 & Year < 2015) %>%
+  dplyr::group_by(Month, source) %>%
+  dplyr::summarise(prcp = mean(prcp, na.rm = TRUE),
+                   cases = mean(cases, na.rm = TRUE)) %>% 
+  subset(source != "station") %>%
+  mutate(source = recode(source, 
+                         "chelsa" = "CHELSA",
+                         "cru"   = "CRU",
+                         "era5" = "ERA5",
+                         "terraclimate" = "TerraClimate",
+                         "worldclim" = "WorldClim")) %>%
+  mutate(source = factor(source, levels = c("CHELSA",
+                                            "CRU",
+                                            "ERA5",
+                                            "TerraClimate",
+                                            "WorldClim"))) %>% 
+  ggplot() +
+  geom_bar(aes(x = as.factor(Month), y = cases), stat = "identity", colour = 'transparent', fill = 'slateblue', alpha = 0.3) + 
+  geom_line(data = station, mapping = aes(x = Month, y = station *9, colour = 'station'), stat = "identity", alpha = 0.7) + 
+  geom_line(mapping = aes(Month, prcp *9, group = source, colour = "source"), stat = "identity", alpha = 0.7) +
+  theme_light() +
+  theme(legend.position = "top",
+        axis.text = element_text(size = 8),
+        axis.text.x = element_text(angle = 90),
+        panel.grid = element_blank(),
+        legend.title = element_blank(),
+        strip.background = element_blank(),
+        strip.text = element_text(colour = "black")) +
+  ylab("Dengue cases") + xlab("Month") +
+  scale_x_discrete(labels = month.abb) +
+  facet_wrap(~source, scales = "fixed") +
+  scale_colour_manual(values = c("grey50", "red")) +
+  guides(colour = guide_legend(override.aes = list(alpha = 0.7))) 
+
+prcp_dengue <- 
+  gp1 %+% scale_y_continuous(name = expression("Dengue cases"), 
+                             sec.axis = sec_axis(~ . / 9, 
+                                                 breaks = seq(0,15, 5),
+                                                 name = "Precipitation (mm/day)"), 
+                             limits = c(0, 105), 
+                             expand = c(0,0)) +
+  theme(axis.title.y.right = element_text(hjust = 0.2,
+                                          vjust = 1))
+
+ggarrange(temp_malaria, prcp_malaria,
+          temp_dengue, prcp_dengue,
+          labels = c("A", "B", "C", "D"),
+          ncol = 2, nrow = 2)
+ggsave("figures/figS1", device = "tiff", width = 10, height = 8, units = "in", dpi = 400)
+
+############################################################
+
+# Fig. S2
+
+# Timeseries comparing temperatures from different grid cells
+data <- read.csv("data/climate/cru/tmean_cell.csv") %>%
+  dplyr::mutate(cell = recode(cell, "adjacent" = "cell 2",
+                              "station" = "cell 1"))
+
+timeseries <- 
+  data %>% subset(Year > 1989 & Year < 2016) %>% 
+  mutate(date = make_date(Year, Month)) %>%
+  ggplot() +
+  geom_line(aes(date, tmean, group = cell, linetype = cell), alpha = 0.6, colour = "black") +
+  theme_light() +
+  theme(legend.position = "top",
+        legend.title = element_blank()) +
+  ylab("Mean temperature (°C)") +
+  scale_x_date(name = "Time",
+               labels = date_format("%Y"),
+               expand = c(0,0),
+               breaks = date_breaks("5 years")) +
+  scale_linetype_manual(values = c("solid", "dotted"))
+
+#guides(colour = guide_legend(override.aes = list(alpha = 0.6)))
+
+
+# CRU model with different grid cells
+
+load("models/dengue/estimates_cru_cell.RData")
+load("models/malaria/estimates_cru_cell.RData")
+
+estimates <- rbind(dengue_estimates,
+                   malaria_estimates) %>%
+  dplyr::mutate(cell = recode(cell, "adjacent" = "cell 2",
+                              "station" = "cell 1")) %>%
+  ggplot(aes(variable)) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey", size = 0.5) +
+  geom_point(aes(x = variable, y = mean, colour = cell), shape = 16, position = position_dodge(width = 0.5)) +
+  geom_linerange(aes(ymin = lci, ymax = uci, colour = cell), position = position_dodge(width = 0.5)) +
+  xlab("") + 
+  coord_flip() + 
+  facet_wrap(~model, scales = "free") +
+  scale_y_continuous(name = "Estimate") +
+  theme_light() +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5),"cm"),
+        axis.line.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        strip.text = element_text(colour = "black", size = 12),
+        strip.background = element_blank(),
+        legend.title = element_blank()) +
+  scale_colour_manual(values = c("#F593A8", 
+                                 "#89023E"))
+
+# CRU grid cells
+ecuador <- getData("GADM", country = "ECU", level = 0)
+ras     <- raster("data/climate/cru/tmean/cru_ras.tif")
+
+station_pts <- read.csv("data/climate/station/station_data.csv") %>% dplyr::select(long, lat) %>% drop_na()
+coordinates(station_pts)= ~ long + lat
+proj4string(station_pts) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+pts <- data.frame(x=-80.23,
+                  y=-3.290556)
+coordinates(pts)= ~ x + y
+proj4string(pts) <- CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
+
+p1 <- 
+  ras %>% as("SpatialPixelsDataFrame") %>% as.data.frame() %>%
+  ggplot() +  
+  geom_tile(aes(x=x, y=y, fill=cru_ras)) +
+  geom_sf(data = st_as_sf(ecuador), fill = "transparent") +
+  geom_sf(data = st_as_sf(station_pts), shape = 19) +
+  geom_sf(data = st_as_sf(pts), shape = 4, stroke = 1.5) +
+  scale_fill_distiller(palette = "Spectral",
+                       limits = c(10,28),
+                       breaks = seq(10, 28, 5),
+                       name = "Temperature (°C)",
+                       guide = guide_colourbar(ticks = FALSE,
+                                               barheight = 5)) +
+  theme_light() +
+  theme(legend.position = "right") +
+  scale_x_continuous(limits = c(-82.5, -75)) +
+  xlab("lon") + ylab("lat")
+
+p2 <- p1 + 
+  scale_x_continuous(limits = c(-91.8, -89.2)) +
+  scale_y_continuous(limits = c(-1.45, 1.45)) +
+  theme(panel.background = element_rect(fill = "transparent", colour = NA),  
+        plot.background = element_rect(fill = "transparent",colour = NA),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "none") +
+  xlab("") + ylab("")
+
+p2 <- ggplotGrob(p2)
+p <- p1 + annotation_custom(p2,
+                            xmin = -82.7,
+                            xmax = -80.7,
+                            ymin = -0.8,
+                            ymax = 2)
+
+#ggsave("figures/grid", p, device = "tiff", width = 9, height = 6, units = "in", dpi = 400)
+
+ggarrange(timeseries, labels = c("A"),
+          ggarrange(p, estimates, ncol = 2,
+                    labels = c("B", "C")),
+          nrow = 2)
+
+ggsave("figures/figS2", device = "tiff", width = 9, height = 6, units = "in", dpi = 400)
