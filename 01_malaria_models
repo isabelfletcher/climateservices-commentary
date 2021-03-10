@@ -1,0 +1,73 @@
+## Load libraries
+pacman::p_load("INLA", "dplyr", "lubridate")
+
+# Read in data
+data <- read.csv("data/inla_input/data_malaria.csv") 
+
+data <- data %>% subset(Year > 1988 & Year < 2016) %>% 
+  dplyr::select(-X) %>% 
+  mutate(Date = make_date(Year, Month)) %>% 
+  mutate(timestep = rep(1:324, each = 6)) 
+
+avg <- NULL
+for (j in unique(data$source)){
+  df <- subset(data, data$source == j)
+  for (i in df$timestep){
+    # 0-2
+    df$prcp_02avg[df$timestep == i] = mean(c(subset(df, df$timestep == (i))$prcp, subset(df, df$timestep == (i-1))$prcp, subset(df, df$timestep == (i-2))$prcp))
+    df$tmean_02avg[df$timestep == i] = mean(c(subset(df, df$timestep == (i))$tmean, subset(df, df$timestep == (i-1))$tmean, subset(df, df$timestep == (i-2))$tmean))
+  }
+  avg <- rbind(avg, df)
+}
+
+data <- avg %>% subset(Year > 1989 & Year < 2016) 
+
+# Loop through climate sources
+malaria_estimates   <- NULL
+
+for (i in unique(data$source)){
+  
+  df <- data %>% subset(source == i)
+  
+  y <- df$PV
+  e <- df$Population/100000
+  
+  # Climate effects
+  prcp  <- scale(df$prcp_02avg, center = TRUE, scale = TRUE)[,1]             
+  tmean <- scale(df$tmean_02avg, center = TRUE, scale = TRUE)[,1] 
+  
+  # Random effects
+  t1 <- as.factor(df$Month) 
+  t2 <- as.factor(df$Year)  
+  
+  df_inla <- data.frame(y, e, t1, t2, tmean, prcp)
+  
+  formula <- y ~ 1 + f(t1, model = "rw1") + 
+    f(t2, model = "iid") + 
+    tmean + prcp
+  # Model
+  mod <- inla(formula, data = df_inla, family = "zeroinflatednbinomial0", 
+              offset = log(e), verbose = TRUE,
+              control.inla = list(strategy = 'adaptive'),
+              control.compute = list(dic = TRUE, waic = TRUE, cpo = TRUE, 
+                                     config = TRUE, 
+                                     return.marginals = TRUE), 
+              control.predictor = list(link = 1, compute = TRUE), 
+              control.family = list(link = "log"))
+  save(mod, file = paste0("models/malaria/", i, ".RData"))
+  
+  # Parameter estimates
+  malaria_estimates <- rbind(malaria_estimates, 
+                            mod$summary.fixed %>% 
+                              dplyr::select(mean, `0.025quant`, `0.975quant`) %>%
+                              mutate(variable = rownames(mod$summary.fixed),
+                                     source = paste0(i),
+                                     model = "Malaria") %>%
+                              dplyr::slice(-1) %>% 
+                              dplyr::rename(lci = `0.025quant`,
+                                            uci = `0.975quant`)) %>%
+    tibble::remove_rownames()
+  save(malaria_estimates, file = "models/malaria/estimates.RData")
+  
+  
+}
