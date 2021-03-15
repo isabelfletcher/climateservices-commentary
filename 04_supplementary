@@ -34,8 +34,8 @@ gp1 <-
                                             "WorldClim"))) %>% 
   ggplot() +
   geom_bar(aes(x = as.factor(Month), y = cases), stat = "identity", colour = 'transparent', fill = 'slateblue', alpha = 0.3) + 
-  geom_line(data = station, mapping = aes(x = Month, y = station * 1.2, colour = 'station'), stat = "identity", alpha = 0.7) + 
-  geom_line(mapping = aes(Month, tmean *1.2, group = source, colour = "source"), stat = "identity", alpha = 0.7) +
+  geom_line(data = station, mapping = aes(x = Month, y = (station-20)*4, colour = 'station'), stat = "identity", alpha = 0.7) +
+  geom_line(mapping = aes(x = Month, y = (tmean-20)*4, colour = 'source', group = "source"), stat = "identity", alpha = 0.7) +
   theme_light() +
   theme(legend.position = "top",
         axis.text = element_text(size = 8),
@@ -48,12 +48,12 @@ gp1 <-
   scale_x_discrete(labels = month.abb) +
   facet_wrap(~source, scales = "fixed") +
   scale_colour_manual(values = c("grey50", "red")) +
-  guides(colour = guide_legend(override.aes = list(alpha = 0.7))) 
+  guides(colour = guide_legend(override.aes = list(alpha = 0.7)))
 
 temp_malaria <- 
   gp1 %+% scale_y_continuous(name = expression("Malaria cases"), 
-                             sec.axis = sec_axis(~ . / 1.2 , 
-                                                 breaks = seq(0,30, 5),
+                             sec.axis = sec_axis(~./4+20, 
+                                                 breaks = seq(20, 30, 5),
                                                  name = "Temperature (°C)"), 
                              limits = c(0, 40), 
                              expand = c(0,0)) +
@@ -142,8 +142,8 @@ gp1 <-
                                             "WorldClim"))) %>% 
   ggplot() +
   geom_bar(aes(x = as.factor(Month), y = cases), stat = "identity", colour = 'transparent', fill = 'slateblue', alpha = 0.3) + 
-  geom_line(data = station, mapping = aes(x = Month, y = station *2.5, colour = 'station'), stat = "identity", alpha = 0.7) + 
-  geom_line(mapping = aes(Month, tmean *2.5, group = source, colour = "source"), stat = "identity", alpha = 0.7) +
+  geom_line(data = station, mapping = aes(x = Month, y = (station-20)*10, colour = 'station'), stat = "identity", alpha = 0.7) +
+  geom_line(mapping = aes(x = Month, y = (tmean-20)*10, colour = 'source', group = "source"), stat = "identity", alpha = 0.7) +
   theme_light() +
   theme(legend.position = "top",
         axis.text = element_text(size = 8),
@@ -159,9 +159,9 @@ gp1 <-
   guides(colour = guide_legend(override.aes = list(alpha = 0.7))) 
   
 temp_dengue <- 
-  gp1 %+% scale_y_continuous(name = expression("Dengue cases"), 
-                             sec.axis = sec_axis(~ . / 2.5 , 
-                                                 breaks = seq(0,30, 5),
+  gp1 %+% scale_y_continuous(name = expression("Malaria cases"), 
+                             sec.axis = sec_axis(~./10+20, 
+                                                 breaks = seq(20, 30, 5),
                                                  name = "Temperature (°C)"), 
                              limits = c(0, 105), 
                              expand = c(0,0)) +
