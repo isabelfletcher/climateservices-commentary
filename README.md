@@ -7,7 +7,7 @@ We formulated temporal models of monthly dengue and malaria cases for Machala, a
 
 log(&mu;<sub>it</sub>) = log(P<sub>it</sub>) + log(&rho;<sub>it</sub>) (i)
 
-log(&rho;<sub>it</sub>) = &alpha; + &beta;<sub>t</sub> + &delta;<sub>t</sub> (ii)
+log(&rho;<sub>it</sub>) = &alpha; + &beta;<sub>t</sub> + &sigma;&gamma;<sub>i</sub>x<sub>it</sub> + &delta;<sub>t</sub> (ii)
 
 Posterior distributions of model parameters were estimated using Integrated Nested Laplace approximations (INLA), which provide a computationally quicker alternative for implementing models in a Bayesian statistical framework, in comparison to traditional Markov Chain Monte Carlo (MCMC) methods (5). We compared parameter estimates of these models that included mean temperature and precipitation from observed station data and five selected global climate datasets (CHELSA (6), CRU TS. 4.04 (7), ERA5-Land reanalysis (8), TerraClimate (9) and WorldClim historical monthly weather data (10, 11)). Local observed mean temperature and precipitation were obtained from the Granja Santa Ines weather station located in Machala (3°17’26” S, 79°54’5” W). For each of the five climate datasets we chose the grid cell in which the weather station is located and extracted the value for mean temperature and precipitation. To capture the lagged effect of climate on dengue and malaria risk, we calculated seasonal average temperature and precipitation by taking a three-month average (0-2 months). Finally, we compared the output of dengue and malaria models using CRU TS v.404 data using the corresponding grid cell for the Granja Santa Ines meteorological station compared to using the adjacent grid cell.
 
