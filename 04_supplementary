@@ -327,6 +327,10 @@ estimates <- rbind(dengue_estimates,
   scale_colour_manual(values = c("#F593A8", 
                                  "#89023E"))
 
+# Compare temperature estimates using different grid cells for dengue risk
+dengue_estimates %>% subset(variable == "tmean") %>% dplyr::select(mean, cell) %>%
+  mutate(risk = (exp(mean)-1)*100)
+
 # Arrange plots
 ggarrange(timeseries, labels = c("A"),
           ggarrange(p, estimates, ncol = 2,
