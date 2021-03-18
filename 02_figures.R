@@ -127,4 +127,4 @@ ggdraw() +
   draw_plot(estimates, x = 0, y = 0, width = 1, height = 0.4) +
   draw_plot_label(label = c("A", "B", "C", "D"), size = 15,
                   x = c(0, 0.5, 0, 0.5), y = c(1, 1, 0.4, 0.4))
-ggsave("figures/fig1", device = "tiff", width = 8, height = 9, units = "in", dpi = 400)
+ggsave("figures/fig2", device = "tiff", width = 8, height = 9, units = "in", dpi = 400)
