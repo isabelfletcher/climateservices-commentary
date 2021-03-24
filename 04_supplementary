@@ -7,6 +7,34 @@ pacman::p_load("ggplot2", "dplyr", "lubridate",
 
 # Fig. S1
 
+# Timeseries of malaria and dengue cases in Machala
+
+ggarrange(
+read.csv("data/inla_input/data_dengue.csv") %>% subset(source == "station" & Year > 2001 & Year < 2015) %>%
+  mutate(date = make_date(Year, Month)) %>% 
+  ggplot(aes(date, cases)) +
+  geom_line() +
+  theme_light() + 
+  xlab("Time") + ylab("Dengue cases") +
+  scale_x_date(labels = date_format("%Y"),
+               expand = c(0,0),
+               breaks = date_breaks("2 years")),
+read.csv("data/inla_input/data_malaria.csv") %>% subset(source == "station" & Year > 1989 & Year < 2016) %>%
+  mutate(date = make_date(Year, Month)) %>% 
+  ggplot(aes(date, cases)) +
+  geom_line() +
+  theme_light() + 
+  xlab("Time") + ylab("Malaria cases") +
+  scale_x_date(labels = date_format("%Y"),
+               limits = as.Date(c("1990-01-01", "2015-12-01")),
+               expand = c(0,0),
+               breaks = date_breaks("5 years")),
+labels = c("A", "B"), nrow = 2)
+ggsave("figures/figS1", device = "tiff", width = 6, height = 4, units = "in", dpi = 400)
+############################################################
+
+# Fig. S2
+
 # Malaria plots
 data <- read.csv("data/inla_input/data_malaria.csv")
 
@@ -225,11 +253,11 @@ ggarrange(temp_malaria, prcp_malaria,
           temp_dengue, prcp_dengue,
           labels = c("A", "B", "C", "D"),
           ncol = 2, nrow = 2)
-ggsave("figures/figS1", device = "tiff", width = 10, height = 8, units = "in", dpi = 400)
+ggsave("figures/figS2", device = "tiff", width = 10, height = 8, units = "in", dpi = 400)
 
 ############################################################
 
-# Fig. S2
+# Fig. S3
 
 # Timeseries comparing temperatures from different grid cells
 data <- read.csv("data/climate/cru/tmean_cell.csv") %>%
@@ -336,4 +364,4 @@ ggarrange(timeseries, labels = c("A"),
           ggarrange(p, estimates, ncol = 2,
                     labels = c("B", "C")),
           nrow = 2)
-ggsave("figures/figS2", device = "tiff", width = 9, height = 6, units = "in", dpi = 400)
+ggsave("figures/figS3", device = "tiff", width = 9, height = 6, units = "in", dpi = 400)
