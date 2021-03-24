@@ -2,12 +2,11 @@
 pacman::p_load("INLA", "dplyr", "lubridate")
 
 # Read in data
-data <- read.csv("data/inla_input/data_malaria.csv") 
-
-data <- data %>% subset(Year > 1988 & Year < 2016) %>% 
+data <- read.csv("data/inla_input/data_dengue.csv") %>% subset(Year > 2000 & Year < 2015) %>% 
   dplyr::select(-X) %>% 
   mutate(Date = make_date(Year, Month)) %>% 
-  mutate(timestep = rep(1:324, each = 6)) 
+  mutate(timestep = rep(1:168, each = 6)) 
+
 
 avg <- NULL
 for (j in unique(data$source)){
@@ -20,17 +19,18 @@ for (j in unique(data$source)){
   avg <- rbind(avg, df)
 }
 
-data <- avg %>% subset(Year > 1989 & Year < 2016) 
+
+data <- avg %>% subset(Year > 2001 & Year < 2015) 
 
 # Loop through climate sources
-malaria_estimates   <- NULL
+dengue_estimates   <- NULL
 
 for (i in unique(data$source)){
   
   df <- data %>% subset(source == i)
   
-  y <- df$PV
-  e <- df$Population/100000
+  y <- df$cases
+  e <- df$pop/100000
   
   # Climate effects
   prcp  <- scale(df$prcp_02avg, center = TRUE, scale = TRUE)[,1]             
@@ -46,7 +46,7 @@ for (i in unique(data$source)){
     f(t2, model = "iid") + 
     tmean + prcp
   # Model
-  mod <- inla(formula, data = df_inla, family = "zeroinflatednbinomial0", 
+  mod <- inla(formula, data = df_inla, family = "nbinomial", 
               offset = log(e), verbose = TRUE,
               control.inla = list(strategy = 'adaptive'),
               control.compute = list(dic = TRUE, waic = TRUE, cpo = TRUE, 
@@ -54,20 +54,20 @@ for (i in unique(data$source)){
                                      return.marginals = TRUE), 
               control.predictor = list(link = 1, compute = TRUE), 
               control.family = list(link = "log"))
-  save(mod, file = paste0("models/malaria/", i, ".RData"))
+  save(mod, file = paste0("models/dengue/", i, ".RData"))
   
   # Parameter estimates
-  malaria_estimates <- rbind(malaria_estimates, 
+  dengue_estimates <- rbind(dengue_estimates, 
                             mod$summary.fixed %>% 
                               dplyr::select(mean, `0.025quant`, `0.975quant`) %>%
                               mutate(variable = rownames(mod$summary.fixed),
                                      source = paste0(i),
-                                     model = "Malaria") %>%
+                                     model = "Dengue") %>%
                               dplyr::slice(-1) %>% 
                               dplyr::rename(lci = `0.025quant`,
                                             uci = `0.975quant`)) %>%
     tibble::remove_rownames()
-  save(malaria_estimates, file = "models/malaria/estimates.RData")
+  save(dengue_estimates, file = "models/dengue/estimates.RData")
   
   
 }
